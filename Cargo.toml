@@ -1,0 +1,17 @@
+[package]
+name = "better_projection"
+version = "0.1.0"
+edition = "2018"
+
+# As part of the redesign of rust_geo.
+#
+# A skeleton demonstration showing the simplest outline for a
+# projection/projection_factory.
+#
+# Specifcally is shows how to swap out  clip_factory
+# permitting precision() and clip_angle() in the orignal projection
+# to swap out
+# a) ClipAntimeridian -> ClipCircle
+# b) ResampleNone -> Resample
+#
+[dependencies]
