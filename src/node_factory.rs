@@ -1,35 +1,39 @@
 use crate::Stream;
 use crate::StreamNode;
 use crate::NF;
-use std::cell::RefCell;
-use std::rc::Rc;
+use std::marker::PhantomData;
 
 #[derive(Copy, Clone)]
-pub struct NodeFactory<SR>
+pub struct NodeFactory<SINK, SR>
 where
-    StreamNode<SR>: Stream,
+    SINK: Stream,
 {
+    pd: PhantomData<SINK>,
     pub raw: SR,
 }
 
-impl<SR> NodeFactory<SR>
+impl<SINK, SR> NodeFactory<SINK, SR>
 where
-    SR: 'static,
-    StreamNode<SR>: Stream,
+    SINK: Stream,
 {
-    pub fn new(raw: SR) -> NodeFactory<SR> {
-        NodeFactory { raw }
+    pub fn new(raw: SR) -> NodeFactory<SINK, SR> {
+        NodeFactory {
+            pd: PhantomData::<SINK>,
+            raw,
+        }
     }
 }
-impl<SR> NF for NodeFactory<SR>
+impl<SINK, SR> NF for NodeFactory<SINK, SR>
 where
-    SR: 'static + Copy,
-    StreamNode<SR>: Stream,
+    SINK: Stream,
+    SR: Clone,
 {
-    fn generate(&self, sink: Rc<RefCell<dyn Stream>>) -> Rc<RefCell<dyn Stream>> {
-        Rc::new(RefCell::new(StreamNode {
-            raw: self.raw,
+    type Sink = SINK;
+    type SR = SR;
+    fn generate(&self, sink: SINK) -> StreamNode<SINK, SR> {
+        StreamNode {
+            raw: self.raw.clone(),
             sink,
-        }))
+        }
     }
 }

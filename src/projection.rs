@@ -1,5 +1,8 @@
-use std::cell::RefCell;
-use std::rc::Rc;
+use crate::clip::Clip;
+use crate::clip_node_factory::ClipNodeFactory;
+use crate::InterpolateRaw;
+use crate::StreamNode;
+use std::marker::PhantomData;
 
 use crate::NodeFactory;
 use crate::NodeRawA;
@@ -7,63 +10,60 @@ use crate::NodeRawB;
 use crate::Stream;
 use crate::NF;
 
-pub struct Projection<CF>
+pub struct Projection<I, DRAIN>
 where
-    CF: NF,
+    I: InterpolateRaw,
+    DRAIN: Stream,
 {
-    af: NodeFactory<NodeRawA>,
-    bf: NodeFactory<NodeRawB>,
-    cf: CF,
-    cache: Option<Rc<RefCell<dyn Stream>>>,
+    pd: PhantomData<DRAIN>,
+    af: NodeFactory<DRAIN, NodeRawA>,
+    bf: NodeFactory<StreamNode<DRAIN, NodeRawA>, NodeRawB>,
+    cf: ClipNodeFactory<I, StreamNode<StreamNode<DRAIN, NodeRawA>, NodeRawB>>,
+    // cache: Option<StreamNode<StreamNode<DRAIN, NodeRawA>, Clip<I, DRAIN>>>,
 }
 
-impl<CF> Clone for Projection<CF>
+impl<I, DRAIN> Clone for Projection<I, DRAIN>
 where
-    CF: NF + Copy,
+    I: InterpolateRaw,
+    DRAIN: Stream,
 {
     fn clone(&self) -> Self {
-        match &self.cache {
-            Some(cache) => Self {
-                af: self.af,
-                bf: self.bf,
-                cf: self.cf,
-                cache: Some(cache.clone()),
-            },
-
-            None => Self {
-                af: self.af,
-                bf: self.bf,
-                cf: self.cf,
-                cache: None,
-            },
+        Self {
+            pd: PhantomData::<DRAIN>,
+            af: self.af.clone(),
+            bf: self.bf.clone(),
+            cf: self.cf.clone(),
         }
     }
 }
 
-impl<CF> Projection<CF>
+impl<I, DRAIN> Projection<I, DRAIN>
 where
-    CF: 'static + NF,
+    I: InterpolateRaw,
+    DRAIN: Stream,
 {
-    pub fn new(c: CF) -> Projection<CF> {
+    pub fn new(
+        cf: ClipNodeFactory<I, StreamNode<StreamNode<DRAIN, NodeRawA>, NodeRawB>>,
+    ) -> Projection<I, DRAIN> {
         dbg!("in  projection::new()");
         Projection {
+            pd: PhantomData::<DRAIN>,
             af: NodeFactory::new(NodeRawA { inc_a: 1 }),
             bf: NodeFactory::new(NodeRawB { inc_b: 10 }),
-            cf: c,
-            cache: None,
+            cf,
+            // cache: None,
         }
     }
 
-    pub fn stream(mut self, drain: Rc<RefCell<dyn Stream>>) -> Rc<RefCell<dyn Stream>> {
-        match self.cache {
-            None => {
-                let a = self.af.generate(drain);
-                let b = self.bf.generate(a);
-                let c = self.cf.generate(b);
-                self.cache = Some(c.clone());
-                c
-            }
-            Some(c) => c.clone(),
-        }
+    pub fn stream(
+        self,
+        drain: DRAIN,
+    ) -> StreamNode<
+        StreamNode<StreamNode<DRAIN, NodeRawA>, NodeRawB>,
+        Clip<I, StreamNode<StreamNode<DRAIN, NodeRawA>, NodeRawB>>,
+    > {
+        let a = self.af.generate(drain);
+        let b = self.bf.generate(a);
+        self.cf.generate(b)
     }
 }

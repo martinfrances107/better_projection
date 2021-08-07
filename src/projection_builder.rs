@@ -1,32 +1,55 @@
+use crate::clip_node_factory::ClipNodeFactory;
+use crate::InterpolateRaw;
+use crate::NodeRawA;
+use crate::NodeRawB;
 use crate::Projection;
-use crate::NF;
+use crate::Stream;
+use crate::StreamNode;
+use std::marker::PhantomData;
 
-pub struct ProjectionBuilder<CF>
+pub struct ProjectionBuilder<I, DRAIN>
 where
-    CF: NF,
+    I: InterpolateRaw,
+    DRAIN: Stream,
 {
-    cf: CF,
+    clip_node_factory: ClipNodeFactory<I, StreamNode<StreamNode<DRAIN, NodeRawA>, NodeRawB>>,
+    pd: PhantomData<DRAIN>,
+    pi: PhantomData<I>,
 }
 
-impl<CF> ProjectionBuilder<CF>
+impl<I, DRAIN> ProjectionBuilder<I, DRAIN>
 where
-    CF: 'static + NF + Clone,
+    I: InterpolateRaw,
+    DRAIN: Stream,
 {
     #[inline]
-    pub fn new(cf: CF) -> ProjectionBuilder<CF> {
-        ProjectionBuilder { cf }
+    pub fn new(
+        clip_node_factory: ClipNodeFactory<I, StreamNode<StreamNode<DRAIN, NodeRawA>, NodeRawB>>,
+    ) -> ProjectionBuilder<I, DRAIN> {
+        ProjectionBuilder {
+            clip_node_factory,
+            pd: PhantomData::<DRAIN>,
+            pi: PhantomData::<I>,
+        }
     }
 
     #[inline]
-    pub fn clip<CFNEW>(&mut self, cf: CFNEW) -> ProjectionBuilder<CFNEW>
+    pub fn swap_clip<INEW>(
+        &mut self,
+        clip_node_factory: ClipNodeFactory<INEW, StreamNode<StreamNode<DRAIN, NodeRawA>, NodeRawB>>,
+    ) -> ProjectionBuilder<INEW, DRAIN>
     where
-        CFNEW: NF,
+        INEW: InterpolateRaw,
     {
-        ProjectionBuilder { cf }
+        ProjectionBuilder {
+            clip_node_factory,
+            pd: PhantomData::<DRAIN>,
+            pi: PhantomData::<INEW>,
+        }
     }
 
     #[inline]
-    pub fn build(&self) -> Projection<CF> {
-        Projection::new(self.cf.clone())
+    pub fn build(&self) -> Projection<I, DRAIN> {
+        Projection::new(self.clip_node_factory.clone())
     }
 }
