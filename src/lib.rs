@@ -12,6 +12,8 @@ mod stream_node;
 use crate::node_factory::NodeFactory;
 use crate::projection::Projection;
 use crate::stream_node::StreamNode;
+use std::cell::RefCell;
+use std::rc::Rc;
 
 pub trait Stream: Clone {
     fn point(&mut self, val: u8);
@@ -28,7 +30,7 @@ pub trait Result: Stream {
 pub trait NF {
     type Sink;
     type SR;
-    fn generate(&self, sink: Self::Sink) -> StreamNode<Self::Sink, Self::SR>
+    fn generate(&self, sink: Rc<RefCell<Self::Sink>>) -> StreamNode<Self::Sink, Self::SR>
     where
         <Self as NF>::SR: Clone,
         <Self as NF>::Sink: Stream;
@@ -48,7 +50,7 @@ where
     fn point(&mut self, val: u8) {
         dbg!("inside streamNodeRawA");
         dbg!(val);
-        self.sink.point(val + self.raw.inc_a)
+        self.sink.borrow_mut().point(val + self.raw.inc_a)
     }
 }
 
@@ -69,6 +71,6 @@ where
     fn point(&mut self, val: u8) {
         dbg!("inside node NodeRawB");
         dbg!(val);
-        self.sink.point(val + self.raw.inc_b)
+        self.sink.borrow_mut().point(val + self.raw.inc_b)
     }
 }

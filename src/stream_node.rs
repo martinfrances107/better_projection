@@ -1,4 +1,6 @@
 use crate::Stream;
+use std::cell::RefCell;
+use std::rc::Rc;
 
 #[derive(Clone)]
 pub struct StreamNode<SINK, SR>
@@ -7,5 +9,5 @@ where
     SR: Clone,
 {
     pub raw: SR,
-    pub sink: SINK,
+    pub sink: Rc<RefCell<SINK>>,
 }

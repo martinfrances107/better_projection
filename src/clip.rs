@@ -51,6 +51,6 @@ where
         // let i_inc = si.interpolate();
         let i_inc = 3u8;
 
-        self.sink.point(val + self.clip() + i_inc)
+        self.sink.borrow_mut().point(val + self.clip() + i_inc)
     }
 }

@@ -1,14 +1,15 @@
 use crate::clip::Clip;
 use crate::clip_node_factory::ClipNodeFactory;
 use crate::InterpolateRaw;
-use crate::StreamNode;
-use std::marker::PhantomData;
-
 use crate::NodeFactory;
 use crate::NodeRawA;
 use crate::NodeRawB;
 use crate::Stream;
+use crate::StreamNode;
 use crate::NF;
+use std::cell::RefCell;
+use std::marker::PhantomData;
+use std::rc::Rc;
 
 pub struct Projection<I, DRAIN>
 where
@@ -57,13 +58,13 @@ where
 
     pub fn stream(
         self,
-        drain: DRAIN,
+        drain: Rc<RefCell<DRAIN>>,
     ) -> StreamNode<
         StreamNode<StreamNode<DRAIN, NodeRawA>, NodeRawB>,
         Clip<I, StreamNode<StreamNode<DRAIN, NodeRawA>, NodeRawB>>,
     > {
-        let a = self.af.generate(drain);
-        let b = self.bf.generate(a);
+        let a = Rc::new(RefCell::new(self.af.generate(drain)));
+        let b = Rc::new(RefCell::new(self.bf.generate(a)));
         self.cf.generate(b)
     }
 }

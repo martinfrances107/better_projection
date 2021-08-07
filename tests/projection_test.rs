@@ -10,10 +10,12 @@ mod projection_test {
     use better_projection::projection_builder::ProjectionBuilder;
     use better_projection::Result;
     use better_projection::Stream;
+    use std::cell::RefCell;
+    use std::rc::Rc;
 
     #[test]
     fn swap() {
-        let path = Path::default();
+        let path = Rc::new(RefCell::new(Path::default()));
         let ia = InterpolateA::new(3u8);
         let interpolate_factory_a = NodeFactory::new(ia);
         let cfa = ClipNodeFactory::new(interpolate_factory_a);
@@ -22,7 +24,7 @@ mod projection_test {
         let mut stream_output = projection.stream(path.clone());
         stream_output.point(0);
 
-        assert_eq!(path.result(), 11);
+        assert_eq!(path.borrow().result(), 11);
 
         let ib = InterpolateB::new();
         let interpolate_factory_b = NodeFactory::new(ib);
@@ -30,10 +32,10 @@ mod projection_test {
         let pb2 = pb.swap_clip(cfb);
         let projection2 = pb2.build();
 
-        let path2 = Path::default();
+        let path2 = Rc::new(RefCell::new(Path::default()));
         let mut stream_out2 = projection2.stream(path2.clone());
         stream_out2.point(100);
-        assert_eq!(path2.result(), 211);
+        assert_eq!(path2.borrow().result(), 211);
         assert_eq!(2 + 2, 4);
     }
 }

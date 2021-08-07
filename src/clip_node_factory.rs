@@ -4,7 +4,9 @@ use crate::InterpolateRaw;
 use crate::Stream;
 use crate::StreamNode;
 use crate::NF;
+use std::cell::RefCell;
 use std::marker::PhantomData;
+use std::rc::Rc;
 
 #[derive(Copy, Clone)]
 pub struct ClipNodeFactory<I, SINK>
@@ -37,7 +39,7 @@ where
 {
     type Sink = SINK;
     type SR = Clip<I, SINK>;
-    fn generate(&self, sink: SINK) -> StreamNode<SINK, Clip<I, SINK>> {
+    fn generate(&self, sink: Rc<RefCell<SINK>>) -> StreamNode<SINK, Clip<I, SINK>> {
         StreamNode {
             raw: Clip::new(self.interpolate_factory.clone()),
             sink,
