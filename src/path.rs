@@ -1,7 +1,7 @@
 use crate::Result;
 use crate::Stream;
 
-#[derive(Copy, Clone, Default)]
+#[derive(Copy, Clone, Debug, Default)]
 pub struct Path {
     val: u8,
 }

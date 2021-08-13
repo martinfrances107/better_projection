@@ -1,26 +1,13 @@
-use crate::InterpolateRaw;
-use crate::InterpolateTrait;
-use crate::Stream;
-use crate::StreamNode;
+use crate::Interpolate;
+use std::cell::RefCell;
+use std::fmt::Debug;
+use std::rc::Rc;
 
-#[derive(Copy, Clone, Default)]
-pub struct InterpolateA {
-    val: u8,
-}
-impl InterpolateA {
-    pub fn new(val: u8) -> InterpolateA {
-        InterpolateA { val }
-    }
-}
-
-impl InterpolateRaw for InterpolateA {}
-
-impl<SINK> InterpolateTrait for StreamNode<SINK, InterpolateA>
+pub fn gen_interpolate_a<STREAM>(radius: u8) -> Interpolate<STREAM>
 where
-    SINK: Stream,
+    STREAM: Debug,
 {
-    fn interpolate(&self) -> u8 {
-        dbg!("inside interpolate() - InterpolateA");
-        self.raw.val
-    }
+    Rc::new(move |to: u8, from: u8, stream: Rc<RefCell<STREAM>>| {
+        dbg!("computed {:#?} {:#?}", radius + to + from, stream);
+    })
 }

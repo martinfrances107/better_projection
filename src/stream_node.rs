@@ -2,7 +2,7 @@ use crate::Stream;
 use std::cell::RefCell;
 use std::rc::Rc;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct StreamNode<SINK, SR>
 where
     SINK: Stream,

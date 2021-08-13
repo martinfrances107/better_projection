@@ -1,6 +1,6 @@
 use crate::clip::Clip;
 use crate::clip_node_factory::ClipNodeFactory;
-use crate::InterpolateRaw;
+// use crate::Interpolate;
 use crate::NodeFactory;
 use crate::NodeRawA;
 use crate::NodeRawB;
@@ -11,21 +11,19 @@ use std::cell::RefCell;
 use std::marker::PhantomData;
 use std::rc::Rc;
 
-pub struct Projection<I, DRAIN>
+pub struct Projection<DRAIN>
 where
-    I: InterpolateRaw,
     DRAIN: Stream,
 {
     pd: PhantomData<DRAIN>,
     af: NodeFactory<DRAIN, NodeRawA>,
     bf: NodeFactory<StreamNode<DRAIN, NodeRawA>, NodeRawB>,
-    cf: ClipNodeFactory<I, StreamNode<StreamNode<DRAIN, NodeRawA>, NodeRawB>>,
+    cf: ClipNodeFactory<StreamNode<StreamNode<DRAIN, NodeRawA>, NodeRawB>>,
     // cache: Option<StreamNode<StreamNode<DRAIN, NodeRawA>, Clip<I, DRAIN>>>,
 }
 
-impl<I, DRAIN> Clone for Projection<I, DRAIN>
+impl<DRAIN> Clone for Projection<DRAIN>
 where
-    I: InterpolateRaw,
     DRAIN: Stream,
 {
     fn clone(&self) -> Self {
@@ -38,14 +36,13 @@ where
     }
 }
 
-impl<I, DRAIN> Projection<I, DRAIN>
+impl<DRAIN> Projection<DRAIN>
 where
-    I: InterpolateRaw,
     DRAIN: Stream,
 {
     pub fn new(
-        cf: ClipNodeFactory<I, StreamNode<StreamNode<DRAIN, NodeRawA>, NodeRawB>>,
-    ) -> Projection<I, DRAIN> {
+        cf: ClipNodeFactory<StreamNode<StreamNode<DRAIN, NodeRawA>, NodeRawB>>,
+    ) -> Projection<DRAIN> {
         dbg!("in  projection::new()");
         Projection {
             pd: PhantomData::<DRAIN>,
@@ -61,7 +58,7 @@ where
         drain: Rc<RefCell<DRAIN>>,
     ) -> StreamNode<
         StreamNode<StreamNode<DRAIN, NodeRawA>, NodeRawB>,
-        Clip<I, StreamNode<StreamNode<DRAIN, NodeRawA>, NodeRawB>>,
+        Clip<StreamNode<StreamNode<DRAIN, NodeRawA>, NodeRawB>>,
     > {
         let a = Rc::new(RefCell::new(self.af.generate(drain)));
         let b = Rc::new(RefCell::new(self.bf.generate(a)));

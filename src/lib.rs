@@ -37,7 +37,7 @@ pub trait NF {
 }
 
 // NB cannot have a default value here.
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug)]
 pub struct NodeRawA {
     inc_a: u8, // parent: &'a mut dyn Stream,
                // placeholder: NodeANoSink
@@ -54,12 +54,9 @@ where
     }
 }
 
-pub trait InterpolateRaw: Clone {}
-trait InterpolateTrait {
-    fn interpolate(&self) -> u8;
-}
+pub type Interpolate<STREAM> = Rc<dyn Fn(u8, u8, Rc<RefCell<STREAM>>)>;
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug)]
 pub struct NodeRawB {
     inc_b: u8,
 }
